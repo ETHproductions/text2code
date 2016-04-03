@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<link rel="stylesheet" type="text/css" href="../style/style.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <style>
+        textarea { width: 44%; }
+    </style>
+    <script>
+    function str (obj) {
+		if (obj.constructor === String) return '"' + obj.replace(/\n/g,"\\n").replace(/"/g,"\\\"") + '"';
+    	if (obj.constructor === Array)  return '[' + obj.map(str).join(", ") + ']';
+    	return "" + obj;
+    }
+    
+    function sp (text, split) {
+    	for (var i = 0, level = 0, a = [""]; i < text.length; i++) {
+    		var char = text[i];
+    		if (level === 0) {
+    			if (RegExp("^"+split).test(text.slice(i))) {
+    				a.push("");
+    				i += split.length - 1;
+    			}
+    			else {
+    				a[a.length-1] += char;
+    				if (char === "(")
+    					level++;
+    			}
+    		}
+    		else {
+    			a[a.length-1] += char;
+    			if (char === ")") level--;
+    			else if (char === "(") level++;
+    		}
+    	}
+    	if (level === 0)
+    		return a;
+    	else
+    		return [];
+    }
+        
+    function denumber (code) {
+        /* TODO: replace text numbers (i.e. "one", "twenty-three", "one million one hundred two") with real numbers */
+        return code;
+    }
+    
+    function simplify (code) {
+    	var i = 1e4;
+    	while (i-- && /(^|[\s(])\(([^,()\s]+)\)/.test(code)) code = code.replace(/(^|[\s(])\(([^,()\s]+)\)/,"$1$2");
+    	return code;
+    }
+    
+    var code_commands = {
+    	print:          function(a){/*stack.push(a);*/return "console.log("+a+")";},
+    	set:            function(a,b){var z=b.split(", ");return a.split(", ").map(function(x,y){return x+" = "+(z[y]||z[z.length-1])}).join(";\n")},
+    	add:            function(a,b){a=sp(a,", ");b=sp(b,", ");return b.map(function(x,y){return a.length===b.length?x+" += "+a[y]:x+" += "+a.join(" + ")}).join(";\n")},
+    	create:         function(a){/*stack.push(a);*/return "var "+a;},
+    	create2:        function(a,b){/*stack.push(a);*/return "var "+a+" = "+b;},
+        
+        repeataction:   function(a,b){return "for(var $loop = 0; $loop < "+b+"; $loop++) "+a},
+    	
+    	sep1:           "(%0)",
+    	sep2:           "%0, %1",
+    	sep3:           "(%0)",
+    	sep4:           ";\n",
+    	
+    	prop:           "%0.%1",
+    	
+    	not:            "!(%0)",
+    	positive:       "+%0",
+    	negative:       "-%0",
+    	double:         "%0 * 2",
+    	square:         "Math.pow(%0, 2)",
+    	cube:           "Math.pow(%0, 3)",
+		sqrt:           "Math.sqrt(%0)",
+		cbrt:           "Math.pow(%0, 1/3)",
+    	
+    	plus:           "%0 + %1",
+    	minus:          "%0 - %1",
+    	times:          "%0 * %1",
+    	over:           "%0 / %1",
+    	mod:            "%0 % %1",
+    	power:          "Math.pow(%0, %1)",
+    	
+    	equal:          "%0 === %1",
+    	unequal:        "%0 !== %1",
+    	lessthan:       "%0 < %1",
+    	greaterthan:    "%0 > %1",
+    	lessequal:      "%0 <= %1",
+    	greaterequal:   "%0 >= %1",
+    	divisible:      "(%0 % %1) === 0",
+    	indivisible:    "(%0 % %1) !== 0"
+    };
+      
+    var text_commands = {
+    	prop:           ["%0's %1", "the %1 of %0"],
+    	
+    	not:            ["not %0"],
+    	positive:       ["positive %0"],
+    	negative:       ["negative %0"],
+    	
+    	plus:           ["%0 plus %1"],
+    	minus:          ["%0 minus %1"],
+    	times:          ["%0 times %1"],
+    	over:           ["%0 divided by %1", "%0 over %1"],
+    	mod:            ["%0 mod %1", "%0 modulo %1"],
+    	power:          ["%0 to the power of %1", "%0 to the %1 power"],
+    	
+    	double:         ["double %0", "twice %0", "%0 doubled"],
+		sqrt:           ["the square root of %0"],
+    	square:         ["the square of %0", "square %0", "%0 squared"],
+    	cube:           ["the cube of %0", "cube %0", "%0 cubed"],
+    	
+    	sep1:           ["%0,"],
+    	
+    	equal:          ["%0 equals %1", "%0 is equal to %1", "%0 is the same as %1", "%0 is not different than %1"],
+    	unequal:        ["%0 does not equal %1", "%0 doesn't equal %1", "%0 is not equal to %1", "%0 is not the same as %1", "%0 is different than %1"],
+    	lessequal:      ["%0 is not greater than %1", "%0 is not more than %1", "%0 is less than or equal to %1"],
+    	greaterequal:   ["%0 is not less than %1", "%0 is greater than or equal to %1", "%0 is more than or equal to %1"],
+    	lessthan:       ["%0 is less than %1", "%0 is not greater than or equal to %1", "%0 is not more than or equal to %1"],
+    	greaterthan:    ["%0 is greater than %1", "%0 is more than %1", "%0 is not less than or equal to %1"],
+    	divisible:      ["%0 is divisible by %1"],
+    	indivisible:    ["%0 is not divisible by %1"],
+    	
+    	sep2:           ["%0 and %1", "%0 %1(?! times)"],
+    	sep3:           ["\\(\\s*%0\\s*\\)"],
+    	
+    	set:            ["set %0 to %1"],
+    	add:            ["add %0 to %1"],
+    	create2:        ["create (?:a |the )?variable (?:called )?%0 with (?:a )?value (?:of )?%1"],
+    	create:         ["create (?:a |the )?variable (?:called )?%0"],
+    	print:          ["log %0", "print %0"],
+        
+        repeataction:   ["%0 %1 times"],
+    	
+    	sep4:           ["\\.\\s*", ";\\s*", "\\s*\\n"]
+    };
+      
+    function text2code (text, from, to, debug, run) {
+    	var orig = text;
+    	debug && (console.log("Program:"), console.log(text.replace(/(^|\n)/g,"$1\t")), console.log("Compiling program..."));
+    	
+    	/************** Prepping program for compilation **************/
+    	
+    	var values = [];
+    	debug && console.log("Removing numbers and strings.");
+    	text = text.replace(/"(?:\\.|[^"])+"/gi, function (x) { values.push(x); return "VALUE-" + (values.length - 1); });
+        text = denumber(text);
+    	text = text.replace(/(^|[ \t])([+-]?\d*\.?\d+(?:e[+-]?)?\d*)/gi, function (_,y,x) { values.push(x); return y + "VALUE-" + (values.length - 1); });
+    	debug && console.log(text.replace(/(^|\n)/g,"$1\t"));
+    	
+    	debug && console.log("Removing variables.");
+		
+    	var newtext = text.replace(/VALUE-\d+/gi,"#"), oldtext = text, item = /0/;
+    	debug && newtext !== oldtext && (console.log("Removed values:"), console.log(newtext.replace(/(^|\n)/g,"$1\t")));
+		
+    	for (var key in text_commands) for (var item of text_commands[key]) if (item !== "%0 %1(?! times)" && item !== "the %1 of %0") {
+			oldtext = newtext;
+    		var reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)"),"i");
+    		while (reg.test(newtext)) newtext = newtext.replace(reg,/%1/.test(item)?/^%\d/.test(item)?"$1$2 # $3 #":"$1# $2 # $3 #":/^%0/.test(item)?"$1$2 #":/%0/.test(item)?"$1# $2":"$1");
+    		debug && oldtext !== newtext && (console.log("Removed "+item+":"), console.log(newtext.replace(/(^|\n)/g,"$1\t")));
+    	}
+		
+		oldtext = newtext;
+    	reg = /the\s+(.+)\s+of\s+(.+)/gi;
+		while (reg.test(newtext)) newtext = newtext.replace(reg,"$1# $2 # $3 #");
+    	debug && oldtext !== newtext && (console.log("Removed the %1 of %0:"), console.log(newtext.replace(/(^|\n)/g,"$1\t")));
+    	
+    	var vars = newtext.match(/[^#\s]+(?:\s+[^#\s]+)*/g) || [];
+    	for (item of vars.sort(function(x,y){return y.length-x.length})) text = text.replace(RegExp("([ \\t])("+item+")(\\b[ \\t,;.]?)","g"), function (_,a,x,b) { values.push(x.replace(/\s+/g,"_")); return a + "VALUE-" + (values.length - 1) + b; });
+    	debug && (console.log("Variables:", vars), console.log("Removed variables."), console.log(text.replace(/(^|\n)/g,"$1\t")), console.log("Values:",values));
+    	
+    	/************** Compiling each line **************/
+        /* TODO: it/the result/this vars (i.e. "Create variable x, and set it to 100. Print the result." => "var x = 100;\nconsole.log(x);") */
+        /* TODO: line chaining (i.e. "Set x to 1. Add 2." => "x = 1 + 2;" or "x = 1;\nx += 2;") */
+        /* TODO: control flow and indentation */
+    	
+    	debug && (console.log("Starting line compilation..."));
+    	var instructions = [], stack = [], result = text, line = "";
+    	text = "";
+    	for (var item of text_commands.sep4) result = result.replace(RegExp(item,"g"),"\n");
+    	debug && console.log("Split into lines:",result.split("\n"));
+    	
+    	for (line of result.split("\n")) {
+    		debug && line && console.log("\n\nProcessing line:",line);
+    		for (i = 0; i < 1e4 && !/^VALUE-\d+$/.test(line) && text !== line; i++) {
+    			text = line;
+    			for (var key in text_commands) if (text === line) if (key !== "sep4") for (var item of text_commands[key]) {
+    				var reg = RegExp(item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(?:VALUE-(\\d+))"),"i");
+    				if (code_commands[key] && reg.test(line)) {
+    					debug && console.log("Item matched:",key,"(\""+item+"\")");
+    					var match = line.match(reg).slice(1);
+    					if (/%1.*%0/.test(item)) match = match.reverse();
+    					values.push(
+    						typeof code_commands[key] === "string"
+    						? code_commands[key].replace(/%(\d+)/g,function(_,x){return match[x]?values[match[x]]:""})
+    						: code_commands[key].apply(null,match.map(function(x){return values[x]}))
+    					);
+    					line = line.replace(reg,"VALUE-"+(values.length-1));
+    					break;
+    				}
+    			}
+    			debug && line && (console.log("Current line text:",line), console.log("Values:",values), console.log("Value added:",values[values.length-1],"\n\n"));
+    		}
+    		instructions.push(line);
+    	}
+    	
+    	/************** Polishing and packaging **************/
+    	
+    	result = instructions.join(code_commands.sep4);
+    	result = result.replace(/(?:VALUE-\d+\s*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[+y]}).join(code_commands.sep2.replace(/%\d/g,""))});
+    	result = simplify(result);
+    	
+    	debug && (console.log("Done compiling program."), console.log(result.trim().replace(/(^|\n)/g,"$1\t")), run && console.log("Output:"))
+    	if (run) eval(result);
+    	else return result;
+    }
+    </script>
+  </head>
+  <body>
+    <textarea id="text" rows="10" cols="50">
+Create a variable x with a value of 100.
+Print the square root of x.
+Print "Hello, World!" 5 times.</textarea>
+    <textarea id="code" rows="10" cols="50"></textarea>
+	<br>
+	<button onclick="document.getElementById('code').value=text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
+    from
+	<select id="lang-text">
+	  <option value="en" selected>English</option>
+	</select>
+	to
+	<select id="lang-code">
+	  <option value="js" selected>JavaScript</option>
+	</select>
+  </body>
+</html>
