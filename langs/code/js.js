@@ -18,11 +18,17 @@ var code_commands = {
 	sep3:           "(%0)",
 	sep4:           ";\n",
 	
+	"true":         "true",
+	"false":        "false",
+	
 	prop:           "%0.%1",
 	
 	not:            "!(%0)",
 	positive:       "+%0",
 	negative:       "-%0",
+	integer:        "~~%0",
+	number:         "Number(%0)",
+	string:         "String(%0)",
 	double:         "%0 * 2",
 	square:         "Math.pow(%0, 2)",
 	cube:           "Math.pow(%0, 3)",
@@ -43,5 +49,8 @@ var code_commands = {
 	lessequal:      "%0 <= %1",
 	greaterequal:   "%0 >= %1",
 	divisible:      "(%0 % %1) === 0",
-	indivisible:    "(%0 % %1) !== 0"
+	indivisible:    "(%0 % %1) !== 0",
+	isinteger:      "~~(%0) === (%0)",
+	isnumber:       "Number(%0) === (%0)",
+	isstring:       "String(%0) === (%0)"
 };

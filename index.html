@@ -88,9 +88,8 @@
 			var values = [];
 			delog("Compiling program...");
 			delog("Removing numbers and strings.");
-			text = text.replace(/"(?:\\.|[^"])+"/gi, function (x) { values.push(x); return "VALUE-" + (values.length - 1); });
 			text = denumber(text);
-			text = text.replace(/(^|[ \t])([+-]?\d*\.?\d+(?:e[+-]?)?\d*)/gi, function (_,y,x) { values.push(x); return y + "VALUE-" + (values.length - 1); });
+			text = text.replace(/(^|[ \t])("(?:\\.|[^"])+"|[+-]?\d*\.?\d+(?:e[+-]?)?\d*)/gi, function (_,y,x) { values.push(x); return y + "VALUE-" + (values.length - 1); });
 			delog(text.replace(/(^|\n)/g,"$1\t"));
 			delog("Removing variables.");
 		
@@ -169,9 +168,9 @@
 	</head>
 	<body>
 		<textarea id="text" rows="10" cols="50">
-Create a variable x with a value of 100.
-Print the square root of x.
-Print "Hello, World!" 5 times.</textarea>
+Create a variable x with a value of one hundred three point four.
+Print x as an integer.
+Print "Hello, World!" five times.</textarea>
 		<textarea id="code" rows="10" cols="50"></textarea>
 		<br>
 		<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
