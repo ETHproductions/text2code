@@ -5,11 +5,11 @@
 		<link rel="stylesheet" type="text/css" href="../style/style.css">
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
 		<style>
-				textarea { width: 44%; }
+			textarea { width: 44%; }
 		</style>
 		<script>
 		function str (obj) {
-		if (obj.constructor === String) return '"' + obj.replace(/\n/g,"\\n").replace(/"/g,"\\\"") + '"';
+			if (obj.constructor === String) return '"' + obj.replace(/\n/g,"\\n").replace(/"/g,"\\\"") + '"';
 			if (obj.constructor === Array)  return '[' + obj.map(str).join(", ") + ']';
 			return "" + obj;
 		}
@@ -39,86 +39,114 @@
 			else
 				return [];
 		}
+	
+		function ajax (url, success) {
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function() {
+				try {
+					if(xhr.readyState === XMLHttpRequest.DONE) {
+						if(xhr.status !== 200)
+							alert("Something went wrong while retrieving " + url + ".");
+						else
+							try {
+								success(xhr.responseText);
+							} catch (e) {
+								alert("An error occured while running success(): " + e);
+							}
+					}
+				} catch (e) {
+					alert("An error occured while retrieving " + url + ": " + e);
+				}
+			};
+			xhr.open("GET", url);
+			xhr.send();
+		}
 		
 		function text2code (text, from, to, debug, run) {
+			function delog () { if (debug) console.log.apply(console,arguments); }
 			var orig = text;
-			debug && (console.log("Program:"), console.log(text.replace(/(^|\n)/g,"$1\t")), console.log("Loading data..."));
+			delog("Program:");
+			delog(text.replace(/(^|\n)/g,"$1\t"));
+			delog("Loading data...");
+			document.getElementById("progress").innerHTML = "Loading data...";
 			
 			/************** Loading code and text lists **************/
 			
 			var textURL = "https://rawgit.com/ETHproductions/text2code/master/langs/text/"+from+".js";
 			var codeURL = "https://rawgit.com/ETHproductions/text2code/master/langs/code/"+to+".js";
-			var xhr1 = new XMLHttpRequest();
-			xhr1.onreadystatechange = function(){if(xhr1.readyState===XMLHttpRequest.DONE)if(xhr1.status!==200)alert("Something went wrong while retrieving "+textURL);else{
-			
-			eval(xhr1.responseText);
-				
-			var xhr2 = new XMLHttpRequest();
-			xhr2.onreadystatechange = function(){if(xhr2.readyState===XMLHttpRequest.DONE)if(xhr2.status!==200)alert("Something went wrong while retrieving "+codeURL);else{
-			
-			eval(xhr2.responseText);
+			ajax(textURL, function(response1){
+			delog("Loaded text data for " + from + ".");
+			eval(response1);
+			ajax(codeURL, function(response2){
+			delog("Loaded code data for " + to + ".");
+			eval(response2);
+			document.getElementById("progress").innerHTML = "Compiling...";
+			setTimeout(function(){
 			
 			/************** Prepping program for compilation **************/
 			
 			var values = [];
-			debug && (console.log("Compiling program..."), console.log("Removing numbers and strings."));
+			delog("Compiling program...");
+			delog("Removing numbers and strings.");
 			text = text.replace(/"(?:\\.|[^"])+"/gi, function (x) { values.push(x); return "VALUE-" + (values.length - 1); });
 			text = denumber(text);
 			text = text.replace(/(^|[ \t])([+-]?\d*\.?\d+(?:e[+-]?)?\d*)/gi, function (_,y,x) { values.push(x); return y + "VALUE-" + (values.length - 1); });
-			debug && console.log(text.replace(/(^|\n)/g,"$1\t"));
-			
-			debug && console.log("Removing variables.");
+			delog(text.replace(/(^|\n)/g,"$1\t"));
+			delog("Removing variables.");
 		
-			var newtext = text.replace(/VALUE-\d+/gi,"#"), oldtext = text, item = /0/;
-			debug && newtext !== oldtext && (console.log("Removed values:"), console.log(newtext.replace(/(^|\n)/g,"$1\t")));
+			var newtext = text.replace(/VALUE-\d+/gi,"#"), oldtext = text, item = /0/, reg = /0/;
+			if (newtext !== oldtext) delog("Removed values:"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 		
-			for (var key in text_commands) for (var item of text_commands[key]) if (item !== "%0 %1(?! times)" && item !== "the %1 of %0") {
+			for (var key in text_commands) for (item of text_commands[key]) if (item !== "%0 %1(?! times)" && item !== "the %1 of %0") {
 				oldtext = newtext;
-				var reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)"),"i");
+				reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)"),"i");
 				while (reg.test(newtext)) newtext = newtext.replace(reg,/%1/.test(item)?/^%\d/.test(item)?"$1$2 # $3 #":"$1# $2 # $3 #":/^%0/.test(item)?"$1$2 #":/%0/.test(item)?"$1# $2":"$1");
-				debug && oldtext !== newtext && (console.log("Removed "+item+":"), console.log(newtext.replace(/(^|\n)/g,"$1\t")));
+				if (oldtext !== newtext) delog("Removed "+item+":"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 			}
 		
 			oldtext = newtext;
 			reg = /the\s+(.+)\s+of\s+(.+)/gi;
 			while (reg.test(newtext)) newtext = newtext.replace(reg,"$1# $2 # $3 #");
-			debug && oldtext !== newtext && (console.log("Removed the %1 of %0:"), console.log(newtext.replace(/(^|\n)/g,"$1\t")));
+			if (oldtext !== newtext) delog("Removed the %1 of %0:"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 			
 			var vars = newtext.match(/[^#\s]+(?:\s+[^#\s]+)*/g) || [];
-			for (item of vars.sort(function(x,y){return y.length-x.length})) text = text.replace(RegExp("([ \\t])("+item+")(\\b[ \\t,;.]?)","g"), function (_,a,x,b) { values.push(x.replace(/\s+/g,"_")); return a + "VALUE-" + (values.length - 1) + b; });
-			debug && (console.log("Variables:", vars), console.log("Removed variables."), console.log(text.replace(/(^|\n)/g,"$1\t")), console.log("Values:",values));
+			for (item of vars.sort(function(x,y){return y.length-x.length;})) text = text.replace(RegExp("([ \\t])("+item+")(\\b[ \\t,;.]?)","g"), function (_,a,x,b) { values.push(x.replace(/\s+/g,"_")); return a + "VALUE-" + (values.length - 1) + b; });
+			delog("Variables:", vars);
+			delog("Removed variables.");
+			delog(text.replace(/(^|\n)/g,"$1\t"));
+			delog("Values:",values);
 			
 			/************** Compiling each line **************/
-				/* TODO: it/the result/this vars (i.e. "Create variable x, and set it to 100. Print the result." => "var x = 100;\nconsole.log(x);") */
-				/* TODO: line chaining (i.e. "Set x to 1. Add 2." => "x = 1 + 2;" or "x = 1;\nx += 2;") */
-				/* TODO: control flow and indentation */
+			/* TODO: it/the result/this vars (i.e. "Create variable x, and set it to 100. Print the result." => "var x = 100;\nconsole.log(x);") */
+			/* TODO: line chaining (i.e. "Set x to 1. Add 2." => "x = 1 + 2;" or "x = 1;\nx += 2;") */
+			/* TODO: control flow and indentation */
 			
-			debug && (console.log("Starting line compilation..."));
+			delog("Starting line compilation...");
 			var instructions = [], stack = [], result = text, line = "";
 			text = "";
-			for (var item of text_commands.sep4) result = result.replace(RegExp(item,"g"),"\n");
-			debug && console.log("Split into lines:",result.split("\n"));
+			for (item of text_commands.sep4) result = result.replace(RegExp(item,"g"),"\n");
+			delog("Split into lines:",result.split("\n"));
 			
 			for (line of result.split("\n")) {
-				debug && line && console.log("\n\nProcessing line:",line);
-				for (i = 0; i < 1e4 && !/^VALUE-\d+$/.test(line) && text !== line; i++) {
+				if (line) delog("\n\nProcessing line:",line);
+				for (var i = 0; i < 1e5 && !/^VALUE-\d+$/.test(line) && text !== line; i++) {
 					text = line;
-					for (var key in text_commands) if (text === line) if (key !== "sep4") for (var item of text_commands[key]) {
-						var reg = RegExp(item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(?:VALUE-(\\d+))"),"i");
+					for (key in text_commands) if (text === line) if (key !== "sep4") for (item of text_commands[key]) {
+						reg = RegExp(item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(?:VALUE-(\\d+))"),"i");
 						if (code_commands[key] && reg.test(line)) {
-							debug && console.log("Item matched:",key,"(\""+item+"\")");
+							delog("Item matched:",key,"(\""+item+"\")");
 							var match = line.match(reg).slice(1);
 							if (/%1.*%0/.test(item)) match = match.reverse();
 							values.push(
 								typeof code_commands[key] === "string"
-								? code_commands[key].replace(/%(\d+)/g,function(_,x){return match[x]?values[match[x]]:""})
-								: code_commands[key].apply(null,match.map(function(x){return values[x]}))
+								? code_commands[key].replace(/%(\d+)/g,function(_,x){return match[x]?values[match[x]]:"";})
+								: code_commands[key].apply(null,match.map(function(x){return values[x];}))
 							);
 							line = line.replace(reg,"VALUE-"+(values.length-1));
 							break;
 						}
 					}
-					debug && line && (console.log("Current line text:",line), console.log("Values:",values), console.log("Value added:",values[values.length-1],"\n\n"));
+					if (line) delog("Current line text:",line), delog("Values:",values), delog("Value added:",values[values.length-1],"\n\n");
 				}
 				instructions.push(line);
 			}
@@ -126,18 +154,19 @@
 			/************** Polishing and packaging **************/
 			
 			result = instructions.join(code_commands.sep4);
-			result = result.replace(/(?:VALUE-\d+\s*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[y]}).join(code_commands.sep2.replace(/%\d/g,""))});
+			result = result.replace(/(?:VALUE-\d+\s*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[y];}).join(code_commands.sep2.replace(/%\d/g,""));});
 			result = simplify(result);
 			
-			debug && (console.log("Done compiling program."), console.log(result.trim().replace(/(^|\n)/g,"$1\t")), run && console.log("Output:"));
+			delog("Done compiling program.");
+			delog(result.trim().replace(/(^|\n)/g,"$1\t"));
+			document.getElementById("progress").innerHTML = "Ready.";
+			if (run) delog("Output:");
 			document.getElementById('code').value = result;
 			if (run) eval(result);
-		}};
-		xhr2.open("GET",codeURL);
-		xhr2.send();
-		}};
-		xhr1.open("GET",textURL);
-		xhr1.send();
+			
+			}, 20); // end setTimeout()
+			}); // end second ajax()
+			}); // end first ajax()
 		}
 		</script>
 	</head>
@@ -157,5 +186,6 @@ Print "Hello, World!" 5 times.</textarea>
 		<select id="lang-code">
 			<option value="js" selected>JavaScript</option>
 		</select>
+		<span id="progress">Ready.</span>
 	</body>
 </html>

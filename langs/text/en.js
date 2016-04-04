@@ -3,9 +3,7 @@ function denumber (code) {
 	return code;
 }
 
-var text_commands = {
-	prop:           ["%0's %1", "the %1 of %0"],
-	
+var text_commands = {	
 	not:            ["not %0"],
 	positive:       ["positive %0"],
 	negative:       ["negative %0"],
@@ -33,8 +31,10 @@ var text_commands = {
 	divisible:      ["%0 is divisible by %1"],
 	indivisible:    ["%0 is not divisible by %1"],
 	
-	sep2:           ["%0 and %1", "%0 %1(?! times)"],
+	sep2:           ["%0 and %1", "%0 %1(?!\\d| times)"],
 	sep3:           ["\\(\\s*%0\\s*\\)"],
+	
+	prop:           ["%0's %1", "the %1 of %0"],
 	
 	set:            ["set %0 to %1"],
 	add:            ["add %0 to %1"],
