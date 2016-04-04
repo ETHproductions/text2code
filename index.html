@@ -39,112 +39,29 @@
 			else
 				return [];
 		}
-				
-		function denumber (code) {
-				/* TODO: replace text numbers (i.e. "one", "twenty-three", "one million one hundred two") with real numbers */
-				return code;
-		}
-		
-		function simplify (code) {
-			var i = 1e4;
-			while (i-- && /(^|[\s(])\(([^,()\s]+)\)/.test(code)) code = code.replace(/(^|[\s(])\(([^,()\s]+)\)/,"$1$2");
-			return code;
-		}
-		
-		var code_commands = {
-			print:          function(a){/*stack.push(a);*/return "console.log("+a+")";},
-			set:            function(a,b){var z=b.split(", ");return a.split(", ").map(function(x,y){return x+" = "+(z[y]||z[z.length-1])}).join(";\n")},
-			add:            function(a,b){a=sp(a,", ");b=sp(b,", ");return b.map(function(x,y){return a.length===b.length?x+" += "+a[y]:x+" += "+a.join(" + ")}).join(";\n")},
-			create:         function(a){/*stack.push(a);*/return "var "+a;},
-			create2:        function(a,b){/*stack.push(a);*/return "var "+a+" = "+b;},
-				
-				repeataction:   function(a,b){return "for(var $loop = 0; $loop < "+b+"; $loop++) "+a},
-			
-			sep1:           "(%0)",
-			sep2:           "%0, %1",
-			sep3:           "(%0)",
-			sep4:           ";\n",
-			
-			prop:           "%0.%1",
-			
-			not:            "!(%0)",
-			positive:       "+%0",
-			negative:       "-%0",
-			double:         "%0 * 2",
-			square:         "Math.pow(%0, 2)",
-			cube:           "Math.pow(%0, 3)",
-			sqrt:           "Math.sqrt(%0)",
-			cbrt:           "Math.pow(%0, 1/3)",
-			
-			plus:           "%0 + %1",
-			minus:          "%0 - %1",
-			times:          "%0 * %1",
-			over:           "%0 / %1",
-			mod:            "%0 % %1",
-			power:          "Math.pow(%0, %1)",
-			
-			equal:          "%0 === %1",
-			unequal:        "%0 !== %1",
-			lessthan:       "%0 < %1",
-			greaterthan:    "%0 > %1",
-			lessequal:      "%0 <= %1",
-			greaterequal:   "%0 >= %1",
-			divisible:      "(%0 % %1) === 0",
-			indivisible:    "(%0 % %1) !== 0"
-		};
-		
-		var text_commands = {
-			prop:           ["%0's %1", "the %1 of %0"],
-			
-			not:            ["not %0"],
-			positive:       ["positive %0"],
-			negative:       ["negative %0"],
-			
-			plus:           ["%0 plus %1"],
-			minus:          ["%0 minus %1"],
-			times:          ["%0 times %1"],
-			over:           ["%0 divided by %1", "%0 over %1"],
-			mod:            ["%0 mod %1", "%0 modulo %1"],
-			power:          ["%0 to the power of %1", "%0 to the %1 power"],
-			
-			double:         ["double %0", "twice %0", "%0 doubled"],
-			sqrt:           ["the square root of %0"],
-			square:         ["the square of %0", "square %0", "%0 squared"],
-			cube:           ["the cube of %0", "cube %0", "%0 cubed"],
-			
-			sep1:           ["%0,"],
-			
-			equal:          ["%0 equals %1", "%0 is equal to %1", "%0 is the same as %1", "%0 is not different than %1"],
-			unequal:        ["%0 does not equal %1", "%0 doesn't equal %1", "%0 is not equal to %1", "%0 is not the same as %1", "%0 is different than %1"],
-			lessequal:      ["%0 is not greater than %1", "%0 is not more than %1", "%0 is less than or equal to %1"],
-			greaterequal:   ["%0 is not less than %1", "%0 is greater than or equal to %1", "%0 is more than or equal to %1"],
-			lessthan:       ["%0 is less than %1", "%0 is not greater than or equal to %1", "%0 is not more than or equal to %1"],
-			greaterthan:    ["%0 is greater than %1", "%0 is more than %1", "%0 is not less than or equal to %1"],
-			divisible:      ["%0 is divisible by %1"],
-			indivisible:    ["%0 is not divisible by %1"],
-			
-			sep2:           ["%0 and %1", "%0 %1(?! times)"],
-			sep3:           ["\\(\\s*%0\\s*\\)"],
-			
-			set:            ["set %0 to %1"],
-			add:            ["add %0 to %1"],
-			create2:        ["create (?:a |the )?variable (?:called )?%0 with (?:a )?value (?:of )?%1"],
-			create:         ["create (?:a |the )?variable (?:called )?%0"],
-			print:          ["log %0", "print %0"],
-				
-			repeataction:   ["%0 %1 times"],
-			
-			sep4:           ["\\.\\s*", ";\\s*", "\\s*\\n"]
-		};
 		
 		function text2code (text, from, to, debug, run) {
 			var orig = text;
-			debug && (console.log("Program:"), console.log(text.replace(/(^|\n)/g,"$1\t")), console.log("Compiling program..."));
+			debug && (console.log("Program:"), console.log(text.replace(/(^|\n)/g,"$1\t")), console.log("Loading data..."));
+			
+			/************** Loading code and text lists **************/
+			
+			var textURL = "https://rawgit.com/ETHproductions/text2code/master/langs/text/"+from+".js";
+			var codeURL = "https://rawgit.com/ETHproductions/text2code/master/langs/code/"+to+".js";
+			var xhr1 = new XMLHttpRequest();
+			xhr1.onreadystatechange = function(){if(xhr1.readyState===XMLHttpRequest.DONE)if(xhr1.status!==200)alert("Something went wrong while retrieving "+textURL);else{
+			
+			eval(xhr1.responseText);
+				
+			var xhr2 = new XMLHttpRequest();
+			xhr2.onreadystatechange = function(){if(xhr2.readyState===XMLHttpRequest.DONE)if(xhr2.status!==200)alert("Something went wrong while retrieving "+codeURL);else{
+			
+			eval(xhr2.responseText);
 			
 			/************** Prepping program for compilation **************/
 			
 			var values = [];
-			debug && console.log("Removing numbers and strings.");
+			debug && (console.log("Compiling program..."), console.log("Removing numbers and strings."));
 			text = text.replace(/"(?:\\.|[^"])+"/gi, function (x) { values.push(x); return "VALUE-" + (values.length - 1); });
 			text = denumber(text);
 			text = text.replace(/(^|[ \t])([+-]?\d*\.?\d+(?:e[+-]?)?\d*)/gi, function (_,y,x) { values.push(x); return y + "VALUE-" + (values.length - 1); });
@@ -209,12 +126,18 @@
 			/************** Polishing and packaging **************/
 			
 			result = instructions.join(code_commands.sep4);
-			result = result.replace(/(?:VALUE-\d+\s*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[+y]}).join(code_commands.sep2.replace(/%\d/g,""))});
+			result = result.replace(/(?:VALUE-\d+\s*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[y]}).join(code_commands.sep2.replace(/%\d/g,""))});
 			result = simplify(result);
 			
 			debug && (console.log("Done compiling program."), console.log(result.trim().replace(/(^|\n)/g,"$1\t")), run && console.log("Output:"));
+			document.getElementById('code').value = result;
 			if (run) eval(result);
-			else return result;
+		}};
+		xhr2.open("GET",codeURL);
+		xhr2.send();
+		}};
+		xhr1.open("GET",textURL);
+		xhr1.send();
 		}
 		</script>
 	</head>
@@ -225,7 +148,7 @@ Print the square root of x.
 Print "Hello, World!" 5 times.</textarea>
 		<textarea id="code" rows="10" cols="50"></textarea>
 		<br>
-		<button onclick="document.getElementById('code').value=text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
+		<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
 		from
 		<select id="lang-text">
 			<option value="en" selected>English</option>
