@@ -5,7 +5,7 @@
 		<link rel="stylesheet" type="text/css" href="../style/style.css">
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
 		<style>
-			textarea { width: 44%; }
+			textarea { width: 44%; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4; }
 		</style>
 		<script>
 		function str (obj) {
@@ -150,7 +150,7 @@
 			/************** Polishing and packaging **************/
 			
 			result = instructions.join(code_commands.sep4);
-			result = result.replace(/(?:VALUE-\d+\s*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[y];}).join(code_commands.sep2.replace(/%\d/g,""));});
+			result = result.replace(/(?:VALUE-\d+[ \t]*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[y];}).join(code_commands.sep2.replace(/%\d/g,""));});
 			result = simplify(result);
 			
 			delog("Done compiling program.");
@@ -181,6 +181,7 @@ Print "Hello, World!" five times.</textarea>
 		to
 		<select id="lang-code">
 			<option value="js" selected>JavaScript</option>
+			<option value="py2">Python 2</option>
 		</select>
 		<span id="progress">Ready.</span>
 	</body>
