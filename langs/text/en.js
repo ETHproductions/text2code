@@ -3,7 +3,7 @@ function denumber (code) {
 	return code;
 }
 
-var text_commands = {	
+var text_commands = {
 	not:            ["not %0"],
 	positive:       ["positive %0"],
 	negative:       ["negative %0"],

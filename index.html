@@ -72,8 +72,8 @@
 			
 			/************** Loading code and text lists **************/
 			
-			var textURL = "https://rawgit.com/ETHproductions/text2code/master/langs/text/"+from+".js";
-			var codeURL = "https://rawgit.com/ETHproductions/text2code/master/langs/code/"+to+".js";
+			var textURL = "langs/text/"+from+".js";
+			var codeURL = "langs/code/"+to+".js";
 			ajax(textURL, function(response1){
 			delog("Loaded text data for " + from + ".");
 			eval(response1);
@@ -97,7 +97,7 @@
 			var newtext = text.replace(/VALUE-\d+/gi,"#"), oldtext = text, item = /0/, reg = /0/;
 			if (newtext !== oldtext) delog("Removed values:"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 		
-			for (var key in text_commands) for (item of text_commands[key]) if (item !== "%0 %1(?! times)" && item !== "the %1 of %0") {
+			for (var key in text_commands) for (item of text_commands[key]) if (item !== "%0 %1(?!\\d| times)") {
 				oldtext = newtext;
 				reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)"),"i");
 				while (reg.test(newtext)) newtext = newtext.replace(reg,/%1/.test(item)?/^%\d/.test(item)?"$1$2 # $3 #":"$1# $2 # $3 #":/^%0/.test(item)?"$1$2 #":/%0/.test(item)?"$1# $2":"$1");
@@ -105,9 +105,6 @@
 			}
 		
 			oldtext = newtext;
-			reg = /the\s+(.+)\s+of\s+(.+)/gi;
-			while (reg.test(newtext)) newtext = newtext.replace(reg,"$1# $2 # $3 #");
-			if (oldtext !== newtext) delog("Removed the %1 of %0:"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 			
 			var vars = newtext.match(/[^#\s]+(?:\s+[^#\s]+)*/g) || [];
 			for (item of vars.sort(function(x,y){return y.length-x.length;})) text = text.replace(RegExp("([ \\t])("+item+")(\\b[ \\t,;.]?)","g"), function (_,a,x,b) { values.push(x.replace(/\s+/g,"_")); return a + "VALUE-" + (values.length - 1) + b; });
