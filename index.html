@@ -2,10 +2,11 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+		<title>text2code - An experimental program to turn text into code</title>
 		<link rel="stylesheet" type="text/css" href="../style/style.css">
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
 		<style>
-			textarea { width: 44%; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4; }
+			textarea { width: 96%; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4; }
 		</style>
 		<script>
 		function str (obj) {
@@ -64,7 +65,7 @@
 		
 		function text2code (text, from, to, debug, run) {
 			function delog () { if (debug) console.log.apply(console,arguments); }
-			var orig = text;
+			var orig = text, stack = [];
 			delog("Program:");
 			delog(text.replace(/(^|\n)/g,"$1\t"));
 			delog("Loading data...");
@@ -98,12 +99,10 @@
 		
 			for (var key in text_commands) for (item of text_commands[key]) if (item !== "%0 %1(?!\\d| times)") {
 				oldtext = newtext;
-				reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)"),"i");
-				while (reg.test(newtext)) newtext = newtext.replace(reg,/%1/.test(item)?/^%\d/.test(item)?"$1$2 # $3 #":"$1# $2 # $3 #":/^%0/.test(item)?"$1$2 #":/%0/.test(item)?"$1# $2":"$1");
+				reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)").replace(/^(?!\W)/,"\\b").replace(/.$/,function(x){return /\W/.test(x)?x:x+"\\b"}),"i");
+				while (reg.test(newtext)) newtext = newtext.replace(reg,/%1/.test(item)?/^%\d/.test(item)?"$1 $2 # $3 #":"$1 # $2 # $3 #":/^%0/.test(item)?"$1 $2 #":/%0/.test(item)?"$1 # $2":"$1 #");
 				if (oldtext !== newtext) delog("Removed "+item+":"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 			}
-		
-			oldtext = newtext;
 			
 			var vars = newtext.match(/[^#\s]+(?:\s+[^#\s]+)*/g) || [];
 			for (item of vars.sort(function(x,y){return y.length-x.length;})) text = text.replace(RegExp("([ \\t])("+item+")(\\b[ \\t,;.]?)","g"), function (_,a,x,b) { values.push(x.replace(/\s+/g,"_")); return a + "VALUE-" + (values.length - 1) + b; });
@@ -113,12 +112,10 @@
 			delog("Values:",values);
 			
 			/************** Compiling each line **************/
-			/* TODO: it/the result/this vars (i.e. "Create variable x, and set it to 100. Print the result." => "var x = 100;\nconsole.log(x);") */
-			/* TODO: line chaining (i.e. "Set x to 1. Add 2." => "x = 1 + 2;" or "x = 1;\nx += 2;") */
 			/* TODO: control flow and indentation */
 			
 			delog("Starting line compilation...");
-			var instructions = [], stack = [], result = text, line = "";
+			var instructions = [], result = text, line = "";
 			text = "";
 			for (item of text_commands.sep4) result = result.replace(RegExp(item,"g"),"\n");
 			delog("Split into lines:",result.split("\n"));
@@ -128,8 +125,8 @@
 				for (var i = 0; i < 1e5 && !/^VALUE-\d+$/.test(line) && text !== line; i++) {
 					text = line;
 					for (key in text_commands) if (text === line) if (key !== "sep4") for (item of text_commands[key]) {
-						reg = RegExp(item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(?:VALUE-(\\d+))"),"i");
-						if (code_commands[key] && reg.test(line)) {
+						reg = RegExp(item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(?:VALUE-(\\d+))").replace(/^(?!\W)/,"\\b").replace(/.$/,function(x){return /\W/.test(x)?x:x+"\\b"}),"i");
+						if (code_commands.hasOwnProperty(key) && reg.test(line)) {
 							delog("Item matched:",key,"(\""+item+"\")");
 							var match = line.match(reg).slice(1);
 							if (/%1.*%0/.test(item)) match = match.reverse();
@@ -142,14 +139,14 @@
 							break;
 						}
 					}
-					if (line) delog("Current line text:",line), delog("Values:",values), delog("Value added:",values[values.length-1],"\n\n");
+					if (line) delog("Current line text:",line), delog("Values:",values.slice()), delog("Stack:",stack.slice(),"\n\n");
 				}
 				instructions.push(line);
 			}
 			
 			/************** Polishing and packaging **************/
 			
-			result = instructions.join(code_commands.sep4);
+			result = instructions.filter(function(x){return !x||!!values[x.slice(6)]}).join(code_commands.sep4);
 			result = result.replace(/(?:VALUE-\d+[ \t]*)+/g,function(x){return x.match(/\d+/g).map(function(y){return values[y];}).join(code_commands.sep2.replace(/%\d/g,""));});
 			result = simplify(result);
 			
@@ -167,12 +164,18 @@
 		</script>
 	</head>
 	<body>
-		<textarea id="text" rows="10" cols="50">
+		<div style="float:left;width:45%">
+			&nbsp;&nbsp;Enter text here:<br>
+			<textarea id="text" rows="10" cols="50">
 Create a variable x with a value of one hundred three point four.
 Print x as an integer.
 Print "Hello, World!" five times.</textarea>
-		<textarea id="code" rows="10" cols="50"></textarea>
-		<br>
+		</div>
+		<div style="float:right;width:45%;margin-right:10%">
+			&nbsp;&nbsp;Code appears here:<br>
+			<textarea id="code" rows="10" cols="50"></textarea>
+		</div>
+		
 		<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
 		from
 		<select id="lang-text">

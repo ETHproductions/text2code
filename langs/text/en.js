@@ -28,8 +28,12 @@ function denumber (code) {
 }
 
 var text_commands = {
+	sep4:           ["\\.\\s*", ";\\s*", "\\s*\\n", ",? then "],
+	
 	"true":         ["true"],
 	"false":        ["false"],
+	these:          ["these", "the results"],
+	it:             ["it", "this", "the result"],
 	
 	not:            ["not %0"],
 	positive:       ["positive %0"],
@@ -68,14 +72,13 @@ var text_commands = {
 	sep3:           ["\\(\\s*%0\\s*\\)"],
 	
 	prop:           ["%0's %1", "the %1 of %0"],
+	array:          ["the array %0"],
 	
 	set:            ["set %0 to %1"],
-	add:            ["add %0 to %1"],
+	add:            ["add %0 to %1", "add %0$", "add$"],
 	create2:        ["create (?:a |the )?variable (?:called )?%0 with (?:a )?value (?:of )?%1"],
 	create:         ["create (?:a |the )?variable (?:called )?%0"],
-	print:          ["log %0", "print %0"],
+	print:          ["log %0", "log$", "print %0", "print$"],
 
-	repeataction:   ["%0 %1 times"],
-	
-	sep4:           ["\\.\\s*", ";\\s*", "\\s*\\n"]
+	repeataction:   ["%0 %1 times"]
 };
