@@ -32,15 +32,21 @@ var text_commands = {
 	
 	"true":         ["true"],
 	"false":        ["false"],
+	nothing:        ["null", "nothing", "none"],
 	these:          ["these", "the results"],
 	it:             ["it", "this", "the result"],
+	variable:       ["a variable", "variables?", "a var", "vars?"],
+	integer:        ["an integer", "integers?", "an int", "ints?"],
+	float:          ["a float", "floats?", "a number", "numbers?"],
+	string:         ["a string", "strings?", "a text", "texts?"],
+	char:           ["a character", "characters?", "a char", "chars?"],
+	digit:          ["a digit", "digits?"],
+	letter:         ["a letter", "letters?"],
+	symbol:         ["a symbol", "symbols?"],
 	
-	not:            ["not %0"],
 	positive:       ["positive %0"],
 	negative:       ["negative %0"],
-	integer:        ["%0 as an integer"],
-	number:         ["%0 as a number"],
-	string:         ["%0 as a string"],
+	cast:           ["%0 as %1", "cast %0 to %1"],
 	
 	plus:           ["%0 plus %1"],
 	minus:          ["%0 minus %1"],
@@ -56,9 +62,6 @@ var text_commands = {
 	
 	sep1:           ["%0,"],
 	
-	isinteger:      ["%0 is an integer"],
-	isnumber:       ["%0 is a number"],
-	isstring:       ["%0 is a string"],
 	divisible:      ["%0 is divisible by %1"],
 	indivisible:    ["%0 is not divisible by %1"],
 	lessequal:      ["%0 is not greater than %1", "%0 is not more than %1", "%0 is less than or equal to %1"],
@@ -67,8 +70,9 @@ var text_commands = {
 	greaterthan:    ["%0 is greater than %1", "%0 is more than %1", "%0 is not less than or equal to %1"],
 	equal:          ["%0 is %1", "%0 equals %1", "%0 is equal to %1", "%0 is the same as %1", "%0 is not different than %1"],
 	unequal:        ["%0 is not %1", "%0 does not equal %1", "%0 doesn't equal %1", "%0 is not equal to %1", "%0 is not the same as %1", "%0 is different than %1"],
+	not:            ["not %0"],
 	
-	sep2:           ["%0 and %1", "%0 %1(?!\\d| times)"],
+	sep2:           ["%0 and %1", "%0 %1(?!\\d| times| with)"],
 	sep3:           ["\\(\\s*%0\\s*\\)"],
 	
 	prop:           ["%0's %1", "the %1 of %0"],
@@ -76,8 +80,8 @@ var text_commands = {
 	
 	set:            ["set %0 to %1"],
 	add:            ["add %0 to %1", "add %0$", "add$"],
-	create2:        ["create (?:a |the )?variable (?:called )?%0 with (?:a )?value (?:of )?%1"],
-	create:         ["create (?:a |the )?variable (?:called )?%0"],
+	create2:        ["create %0 (?:called )?%1 with (?:a )?value (?:of )?%2"],
+	create:         ["create %0 (?:called )?%1"],
 	print:          ["log %0", "log$", "print %0", "print$"],
 
 	repeataction:   ["%0 %1 times"]

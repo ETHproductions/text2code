@@ -97,7 +97,7 @@
 			var newtext = text.replace(/VALUE-\d+/gi,"#"), oldtext = text, item = /0/, reg = /0/;
 			if (newtext !== oldtext) delog("Removed values:"), delog(newtext.replace(/(^|\n)/g,"$1\t"));
 		
-			for (var key in text_commands) for (item of text_commands[key]) if (item !== "%0 %1(?!\\d| times)") {
+			for (var key in text_commands) for (item of text_commands[key]) if (item !== "%0 %1(?!\\d| times| with)") {
 				oldtext = newtext;
 				reg = RegExp("(.*)"+item.replace(/ /g,"[ \\t]+").replace(/%\d+/g,"(.+)").replace(/^(?!\W)/,"\\b").replace(/.$/,function(x){return /\W/.test(x)?x:x+"\\b"}),"i");
 				while (reg.test(newtext)) newtext = newtext.replace(reg,/%1/.test(item)?/^%\d/.test(item)?"$1 $2 # $3 #":"$1 # $2 # $3 #":/^%0/.test(item)?"$1 $2 #":/%0/.test(item)?"$1 # $2":"$1 #");

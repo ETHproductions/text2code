@@ -37,8 +37,8 @@ var code_commands = {
 									: x + " += " + a.join(" + ");
 						}).join(";\n");
 					},
-	create:         function (a) { stack.push(a); return "var " + a; },
-	create2:        function (a,b) { stack.push(a); return "var " + a + " = " + b; },
+	create:         function (t,a) { stack.push(a); return "var " + a; },
+	create2:        function (t,a,b) { stack.push(a); return "var " + a + " = " + b; },
 	
 	repeataction:   function (a,b) { return "for(var _loop = 0; _loop < " + b + "; _loop++)\n\t" + a; },
 	
@@ -49,8 +49,17 @@ var code_commands = {
 	
 	"true":         "true",
 	"false":        "false",
-	it:             function () { return "("+stack.pop()+")"; },
+	nothing:        "null",
+	it:             function () { return "(" + stack.pop() + ")"; },
 	these:          "",
+	variable:       "_variable_",
+	integer:        "_integer_",
+	float:          "_float_",
+	string:         "_string_",
+	char:           "_char_",
+	digit:          "_digit_",
+	letter:         "_letter_",
+	symbol:         "_symbol_",
 	
 	prop:           "%0.%1",
 	array:          "[%0]",
@@ -58,9 +67,23 @@ var code_commands = {
 	not:            "!(%0)",
 	positive:       "+%0",
 	negative:       "-%0",
-	integer:        "~~%0",
-	number:         "Number(%0)",
-	string:         "String(%0)",
+	cast:           function (a,b) {
+		if (b === "_integer_")
+			return "~~" + a;
+		if (b === "_float_")
+			return "Number(" + a + ")";
+		if (b === "_string_")
+			return "String(" + a + ")";
+		if (b === "_char_")
+			return "String(" + a + ")[0]";
+		if (b === "_digit_")
+			return "(String(" + a + ").match(/\\d/)||[0])[0]";
+		if (b === "_letter_")
+			return "(String(" + a + ").match(/[^\\W\\d_]/)||[\"\"])[0]";
+		if (b === "_symbol_")
+			return "(String(" + a + ").match(/[\\W_]/)||[\"\"])[0]";
+		return a;
+	},
 	double:         "%0 * 2",
 	square:         "Math.pow(%0, 2)",
 	cube:           "Math.pow(%0, 3)",
@@ -74,15 +97,20 @@ var code_commands = {
 	mod:            "%0 % %1",
 	power:          "Math.pow(%0, %1)",
 	
-	equal:          "%0 === %1",
-	unequal:        "%0 !== %1",
+	equal:          function (a,b) {
+		if (/^_[a-z]+_$/.test(b))
+			return code_commands.cast(a,b) + " === " + a;
+		return a + " === " + b;
+	},
+	unequal:        function (a,b) {
+		if (/^_[a-z]+_$/.test(b))
+			return code_commands.cast(a,b) + " !== " + a;
+		return a + " !== " + b;
+	},
 	lessthan:       "%0 < %1",
 	greaterthan:    "%0 > %1",
 	lessequal:      "%0 <= %1",
 	greaterequal:   "%0 >= %1",
 	divisible:      "(%0 % %1) === 0",
-	indivisible:    "(%0 % %1) !== 0",
-	isinteger:      "~~(%0) === (%0)",
-	isnumber:       "Number(%0) === (%0)",
-	isstring:       "String(%0) === (%0)"
+	indivisible:    "(%0 % %1) !== 0"
 };
