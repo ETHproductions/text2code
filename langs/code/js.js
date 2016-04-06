@@ -60,29 +60,32 @@ var code_commands = {
 	digit:          "_digit_",
 	letter:         "_letter_",
 	symbol:         "_symbol_",
+	array:          "_array_",
 	
 	prop:           "%0.%1",
-	array:          "[%0]",
 	
 	not:            "!(%0)",
 	positive:       "+%0",
 	negative:       "-%0",
 	cast:           function (a,b) {
-		if (b === "_integer_")
-			return "~~" + a;
-		if (b === "_float_")
-			return "Number(" + a + ")";
-		if (b === "_string_")
-			return "String(" + a + ")";
-		if (b === "_char_")
-			return "String(" + a + ")[0]";
-		if (b === "_digit_")
-			return "(String(" + a + ").match(/\\d/)||[0])[0]";
-		if (b === "_letter_")
-			return "(String(" + a + ").match(/[^\\W\\d_]/)||[\"\"])[0]";
-		if (b === "_symbol_")
-			return "(String(" + a + ").match(/[\\W_]/)||[\"\"])[0]";
-		return a;
+		return b === "_array_" ? "[" + a + "]"
+		: sp(a, ", ").map(function(x) {
+			if (b === "_integer_")
+				return "~~" + x;
+			if (b === "_float_")
+				return "Number(" + x + ")";
+			if (b === "_string_")
+				return "String(" + x + ")";
+			if (b === "_char_")
+				return "String(" + x + ")[0]";
+			if (b === "_digit_")
+				return "(String(" + x + ").match(/\\d/)||[0])[0]";
+			if (b === "_letter_")
+				return "(String(" + x + ").match(/[^\\W\\d_]/)||[\"\"])[0]";
+			if (b === "_symbol_")
+				return "(String(" + x + ").match(/[\\W_]/)||[\"\"])[0]";
+			return x;
+		}).join(", ");
 	},
 	double:         "%0 * 2",
 	square:         "Math.pow(%0, 2)",
