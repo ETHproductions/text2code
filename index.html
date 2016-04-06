@@ -17,22 +17,21 @@
 Create a variable x with a value of one hundred three point four.
 Print x as an integer.
 Print "Hello, World!" five times.</textarea>
+			<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
+			from
+			<select id="lang-text">
+				<option value="en" selected>English</option>
+			</select>
+			to
+			<select id="lang-code">
+				<option value="js" selected>JavaScript</option>
+				<option value="py2">Python 2</option>
+			</select>
 		</div>
 		<div style="float:right;width:45%;margin-right:10%">
 			&nbsp;&nbsp;Code appears here:<br>
 			<textarea id="code" rows="10" cols="50"></textarea>
+			&nbsp;&nbsp;<span id="progress" style="color:#1C1">Ready.</span>
 		</div>
-		
-		<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
-		from
-		<select id="lang-text">
-			<option value="en" selected>English</option>
-		</select>
-		to
-		<select id="lang-code">
-			<option value="js" selected>JavaScript</option>
-			<option value="py2">Python 2</option>
-		</select>
-		<span id="progress">Ready.</span>
 	</body>
 </html>
