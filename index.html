@@ -8,7 +8,6 @@
 		<style>
 			textarea { width: 96%; -moz-tab-size: 4; -o-tab-size: 4; tab-size: 4; }
 		</style>
-		<script src="src/text2code.js"></script>
 	</head>
 	<body>
 		<div style="float:left;width:45%">
@@ -17,21 +16,23 @@
 Create a variable x with a value of one hundred three point four.
 Print x as an integer.
 Print "Hello, World!" five times.</textarea>
-			<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,false)">Translate</button>
+			<button onclick="text2code(document.getElementById('text').value,document.getElementById('lang-text').value,document.getElementById('lang-code').value,true,document.getElementById('lang-code').value=='js'&&document.getElementById('run').checked)">Translate</button>
 			from
 			<select id="lang-text">
 				<option value="en" selected>English</option>
 			</select>
 			to
-			<select id="lang-code">
+			<select id="lang-code" onchange="document.getElementById('run-span').style='display:'+(this.value==='js'?'inline':'none')">
 				<option value="js" selected>JavaScript</option>
 				<option value="py2">Python 2</option>
 			</select>
+			<span id="run-span"><input type="checkbox" id="run">Run</span>
 		</div>
 		<div style="float:right;width:45%;margin-right:10%">
 			&nbsp;&nbsp;Code appears here:<br>
 			<textarea id="code" rows="10" cols="50"></textarea>
 			&nbsp;&nbsp;<span id="progress" style="color:#1C1">Ready.</span>
 		</div>
+		<script src="src/text2code.js"></script>
 	</body>
 </html>
