@@ -43,10 +43,10 @@ var text_commands = {
 	digit:          ["a digit", "digits?"],
 	letter:         ["a letter", "letters?"],
 	symbol:         ["a symbol", "symbols?"],
+	array:          ["an array", "arrays?", "a list", "lists?"],
 	
 	positive:       ["positive %0"],
 	negative:       ["negative %0"],
-	cast:           ["%0 as %1", "cast %0 to %1"],
 	
 	plus:           ["%0 plus %1"],
 	minus:          ["%0 minus %1"],
@@ -76,8 +76,8 @@ var text_commands = {
 	sep3:           ["\\(\\s*%0\\s*\\)"],
 	
 	prop:           ["%0's %1", "the %1 of %0"],
-	array:          ["the array %0"],
 	
+	cast:           ["%0 as %1", "cast %0 to %1"],
 	set:            ["set %0 to %1"],
 	add:            ["add %0 to %1", "add %0$", "add$"],
 	create2:        ["create %0 (?:called )?%1 with (?:a )?value (?:of )?%2"],

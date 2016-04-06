@@ -60,29 +60,32 @@ var code_commands = {
 	digit:          "_digit_",
 	letter:         "_letter_",
 	symbol:         "_symbol_",
+	array:          "_array_",
 	
 	prop:           "%0.%1",
-	array:          "[%0]",
 	
 	not:            "not (%0)",
 	positive:       "+%0",
 	negative:       "-%0",
 	cast:           function (a,b) {
-		if (b === "_integer_")
-			return "int(" + a + ")";
-		if (b === "_float_")
-			return "float(" + a + ")";
-		if (b === "_string_")
-			return "str(" + a + ")";
-		if (b === "_char_")
-			return "str(" + a + ")[0]";
-		if (b === "_digit_")
-			return "(re.search('\d', str(" + a + ")) or re.search('\d','0')).group(0)";
-		if (b === "_letter_")
-			return "(re.search('[^\W\d_]', str(" + a + ")) or re.search('','')).group(0)";
-		if (b === "_symbol_")
-			return "(re.search('[\W_]', str(" + a + ")) or re.search('\d','0')).group(0)";
-		return a;
+		return b === "_array_" ? "[" + a + "]"
+		: sp(a, ", ").map(function(x) {
+			if (b === "_integer_")
+				return "int(" + x + ")";
+			if (b === "_float_")
+				return "float(" + x + ")";
+			if (b === "_string_")
+				return "str(" + x + ")";
+			if (b === "_char_")
+				return "str(" + x + ")[0]";
+			if (b === "_digit_")
+				return "(re.search('\d', str(" + x + ")) or re.search('\d','0')).group(0)";
+			if (b === "_letter_")
+				return "(re.search('[^\W\d_]', str(" + x + ")) or re.search('','')).group(0)";
+			if (b === "_symbol_")
+				return "(re.search('[\W_]', str(" + x + ")) or re.search('\d','0')).group(0)";
+			return a;
+		}).join(", ");
 	},
 	double:         "%0 * 2",
 	square:         "%0 ** 2",
